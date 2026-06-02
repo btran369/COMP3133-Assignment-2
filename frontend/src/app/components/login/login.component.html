@@ -1,0 +1,50 @@
+<div class="auth-container">
+  <div class="auth-bg-shapes">
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+  </div>
+
+  <div class="auth-card slide-up">
+    <div class="auth-header">
+      <div class="logo">
+        <mat-icon class="logo-icon">groups</mat-icon>
+      </div>
+      <h1>Welcome Back</h1>
+      <p>Sign in to manage your employees</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="auth-form">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Username or Email</mat-label>
+        <input matInput formControlName="usernameOrEmail" placeholder="Enter username or email">
+        <mat-icon matPrefix>person</mat-icon>
+        <mat-error *ngIf="f['usernameOrEmail'].hasError('required')">
+          Username or email is required
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Password</mat-label>
+        <input matInput formControlName="password"
+               [type]="hidePassword ? 'password' : 'text'"
+               placeholder="Enter password">
+        <mat-icon matPrefix>lock</mat-icon>
+        <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword" type="button">
+          <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+        <mat-error *ngIf="f['password'].hasError('required')">Password is required</mat-error>
+        <mat-error *ngIf="f['password'].hasError('minlength')">Password must be at least 6 characters</mat-error>
+      </mat-form-field>
+
+      <button mat-flat-button color="primary" class="submit-btn" type="submit" [disabled]="loading">
+        <mat-spinner *ngIf="loading" diameter="20"></mat-spinner>
+        <span *ngIf="!loading">Sign In</span>
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      <p>Don't have an account? <a routerLink="/signup">Create one</a></p>
+    </div>
+  </div>
+</div>

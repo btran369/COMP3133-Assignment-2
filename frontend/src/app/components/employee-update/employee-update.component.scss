@@ -1,0 +1,213 @@
+.form-page {
+  min-height: 100vh;
+  padding: 32px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.form-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 28px;
+
+  .back-btn {
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    width: 40px; height: 40px;
+
+    &:hover { color: var(--accent); border-color: var(--accent); }
+  }
+
+  h1 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--text-bright);
+  }
+
+  p {
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+}
+
+.form-card {
+  background: rgba(26, 26, 46, 0.85);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  box-shadow: var(--shadow-lg);
+}
+
+/* Photo Upload */
+.photo-upload-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.photo-placeholder {
+  width: 120px; height: 120px;
+  border-radius: 16px;
+  border: 2px dashed var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.3s;
+  color: var(--text-muted);
+
+  mat-icon { font-size: 32px; width: 32px; height: 32px; }
+  span { font-size: 12px; }
+
+  &:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(233, 69, 96, 0.05);
+  }
+}
+
+.photo-preview {
+  position: relative;
+  width: 120px; height: 120px;
+  border-radius: 16px;
+  overflow: hidden;
+
+  img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+
+  .remove-photo {
+    position: absolute;
+    top: 4px; right: 4px;
+    width: 28px; height: 28px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    border-radius: 50%;
+
+    mat-icon { font-size: 16px; width: 16px; height: 16px; }
+  }
+}
+
+.change-photo-btn {
+  color: var(--text-muted);
+  font-size: 12px;
+  margin-top: 4px;
+  mat-icon { font-size: 14px; width: 14px; height: 14px; margin-right: 4px; }
+  &:hover { color: var(--accent); }
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0;
+  gap: 16px;
+  p { color: var(--text-muted); }
+  ::ng-deep .mat-mdc-progress-spinner circle { stroke: var(--accent) !important; }
+}
+
+.photo-hint {
+  color: var(--text-muted);
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+/* Form Grid */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 20px;
+
+  ::ng-deep {
+    .mat-mdc-form-field {
+      width: 100%;
+
+      .mdc-notched-outline__leading,
+      .mdc-notched-outline__notch,
+      .mdc-notched-outline__trailing {
+        border-color: var(--border) !important;
+      }
+
+      &.mat-focused .mdc-notched-outline__leading,
+      &.mat-focused .mdc-notched-outline__notch,
+      &.mat-focused .mdc-notched-outline__trailing {
+        border-color: var(--accent) !important;
+      }
+
+      .mat-mdc-input-element,
+      .mat-mdc-select-value {
+        color: var(--text-bright) !important;
+      }
+
+      .mat-mdc-floating-label {
+        color: var(--text-muted) !important;
+      }
+
+      &.mat-focused .mat-mdc-floating-label {
+        color: var(--accent) !important;
+      }
+
+      .mat-mdc-form-field-icon-prefix .mat-icon {
+        color: var(--text-muted);
+        margin-right: 8px;
+      }
+
+      .mat-mdc-select-arrow { color: var(--text-muted); }
+      .mat-datepicker-toggle { color: var(--text-muted); }
+    }
+  }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+
+  .cancel-btn {
+    border-color: var(--border);
+    color: var(--text-muted);
+    border-radius: 12px;
+    height: 44px;
+    padding: 0 24px;
+
+    &:hover { border-color: var(--text-muted); color: var(--text-bright); }
+  }
+
+  .submit-btn {
+    height: 44px;
+    border-radius: 12px !important;
+    background: linear-gradient(135deg, #e94560, #c23152) !important;
+    color: white !important;
+    font-weight: 600;
+    padding: 0 24px !important;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    &:hover:not([disabled]) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(233, 69, 96, 0.35);
+    }
+
+    &[disabled] { opacity: 0.7; }
+
+    mat-spinner ::ng-deep circle { stroke: white !important; }
+    mat-icon { font-size: 18px; width: 18px; height: 18px; }
+  }
+}
+
+@media (max-width: 768px) {
+  .form-page { padding: 16px; }
+  .form-card { padding: 24px; }
+  .form-grid { grid-template-columns: 1fr; }
+}

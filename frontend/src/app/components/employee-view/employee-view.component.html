@@ -1,0 +1,108 @@
+<div class="view-page">
+  <div class="form-header">
+    <button mat-icon-button routerLink="/employees" class="back-btn">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <div>
+      <h1>Employee Details</h1>
+      <p>Viewing employee information</p>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-container" *ngIf="loading">
+    <mat-spinner diameter="48"></mat-spinner>
+    <p>Loading employee details...</p>
+  </div>
+
+  <!-- Employee Details Card -->
+  <div class="detail-card slide-up" *ngIf="!loading && employee">
+    <!-- Profile Header -->
+    <div class="profile-header">
+      <div class="profile-photo">
+        <img *ngIf="employee.employee_photo" [src]="employee.employee_photo" [alt]="employee.first_name">
+        <div *ngIf="!employee.employee_photo" class="avatar-large">
+          {{ getInitials() }}
+        </div>
+      </div>
+      <div class="profile-info">
+        <h2>{{ employee.first_name }} {{ employee.last_name }}</h2>
+        <span class="badge badge-role">{{ employee.designation }}</span>
+        <span class="badge badge-dept">{{ employee.department }}</span>
+      </div>
+      <div class="profile-actions">
+        <button mat-stroked-button class="edit-btn" [routerLink]="['/employees', employee._id, 'edit']">
+          <mat-icon>edit</mat-icon>
+          Edit
+        </button>
+      </div>
+    </div>
+
+    <!-- Details Grid -->
+    <div class="details-grid">
+      <div class="detail-item">
+        <div class="detail-icon"><mat-icon>email</mat-icon></div>
+        <div class="detail-content">
+          <span class="detail-label">Email</span>
+          <span class="detail-value">{{ employee.email }}</span>
+        </div>
+      </div>
+
+      <div class="detail-item">
+        <div class="detail-icon"><mat-icon>wc</mat-icon></div>
+        <div class="detail-content">
+          <span class="detail-label">Gender</span>
+          <span class="detail-value">{{ employee.gender }}</span>
+        </div>
+      </div>
+
+      <div class="detail-item">
+        <div class="detail-icon"><mat-icon>badge</mat-icon></div>
+        <div class="detail-content">
+          <span class="detail-label">Designation</span>
+          <span class="detail-value">{{ employee.designation }}</span>
+        </div>
+      </div>
+
+      <div class="detail-item">
+        <div class="detail-icon"><mat-icon>business</mat-icon></div>
+        <div class="detail-content">
+          <span class="detail-label">Department</span>
+          <span class="detail-value">{{ employee.department }}</span>
+        </div>
+      </div>
+
+      <div class="detail-item">
+        <div class="detail-icon salary-icon"><mat-icon>attach_money</mat-icon></div>
+        <div class="detail-content">
+          <span class="detail-label">Salary</span>
+          <span class="detail-value salary-value">{{ employee.salary | salary }}</span>
+        </div>
+      </div>
+
+      <div class="detail-item">
+        <div class="detail-icon"><mat-icon>calendar_today</mat-icon></div>
+        <div class="detail-content">
+          <span class="detail-label">Date of Joining</span>
+          <span class="detail-value">{{ formatDate(employee.date_of_joining) }}</span>
+        </div>
+      </div>
+
+      <div class="detail-item" *ngIf="employee.created_at">
+        <div class="detail-icon"><mat-icon>schedule</mat-icon></div>
+        <div class="detail-content">
+          <span class="detail-label">Created At</span>
+          <span class="detail-value">{{ formatDate(employee.created_at) }}</span>
+        </div>
+      </div>
+
+      <div class="detail-item" *ngIf="employee.updated_at">
+        <div class="detail-icon"><mat-icon>update</mat-icon></div>
+        <div class="detail-content">
+          <span class="detail-label">Last Updated</span>
+          <span class="detail-value">{{ formatDate(employee.updated_at) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

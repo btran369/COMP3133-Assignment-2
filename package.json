@@ -1,0 +1,16 @@
+{
+  "name": "101513060_comp3133_assignment2",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "cd backend && npm start",
+    "dev": "cd backend && npm run dev",
+    "install:backend": "cd backend && npm install",
+    "install:frontend": "cd frontend && npm install",
+    "install:all": "npm run install:backend && npm run install:frontend",
+    "build:frontend": "cd frontend && npx ng build --configuration production",
+    "build": "npm run install:all && npm run build:frontend",
+    "postinstall": "npm run install:all"
+  }
+}

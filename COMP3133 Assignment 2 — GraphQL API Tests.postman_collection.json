@@ -1,0 +1,1102 @@
+{
+  "info": {
+    "_postman_id": "14d6767f-6faf-4ef5-9aca-a2078773d4d0",
+    "name": "COMP3133 Assignment 2 — GraphQL API Tests",
+    "description": "Full test suite for the Employee Management GraphQL API.\n\nTest order: Signup → Login → Get All Employees → Add Employee → Search by ID → Update → Search by Department → Search by Designation → Delete → Login Error → Signup Validation\n\n**Test user:** admin / test123\n\nRun the collection top-to-bottom using the Collection Runner.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "48204660",
+    "_collection_link": "https://go.postman.co/collection/48204660-14d6767f-6faf-4ef5-9aca-a2078773d4d0?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "01 — Signup (new user)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('Signup returns success=true', () => {",
+                  "  pm.expect(res.data.Signup.success).to.eql('true');",
+                  "});",
+                  "",
+                  "pm.test('Signup returns a JWT token', () => {",
+                  "  pm.expect(res.data.Signup.token).to.be.a('string').and.not.empty;",
+                  "  pm.collectionVariables.set('signupToken', res.data.Signup.token);",
+                  "});",
+                  "",
+                  "pm.test('User object has _id, username, email', () => {",
+                  "  const u = res.data.Signup.user;",
+                  "  pm.expect(u._id).to.be.a('string');",
+                  "  pm.expect(u.username).to.eql('postman_user');",
+                  "  pm.expect(u.email).to.eql('postman@test.com');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation Signup($input: SignupInput!) {\n  Signup(input: $input) {\n    success\n    message\n    token\n    user {\n      _id\n      username\n      email\n    }\n  }\n}",
+                "variables": "{\"input\":{\"username\":\"postman_user\",\"email\":\"postman@test.com\",\"password\":\"password123\"}}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "02 — Signup validation (short password)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('Status 200 (GraphQL error in body)', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('Returns validation error for short password', () => {",
+                  "  pm.expect(res.errors).to.be.an('array').with.length.greaterThan(0);",
+                  "  pm.expect(res.errors[0].message).to.include('Password');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation Signup($input: SignupInput!) {\n  Signup(input: $input) {\n    success\n    message\n  }\n}",
+                "variables": "{\"input\":{\"username\":\"bad\",\"email\":\"bad@test.com\",\"password\":\"12\"}}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "03 — Signup duplicate user error",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('Returns duplicate error', () => {",
+                  "  pm.expect(res.errors).to.be.an('array').with.length.greaterThan(0);",
+                  "  pm.expect(res.errors[0].message.toLowerCase()).to.include('duplicate');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation Signup($input: SignupInput!) {\n  Signup(input: $input) {\n    success\n    message\n  }\n}",
+                "variables": "{\"input\":{\"username\":\"admin\",\"email\":\"admin2@test.com\",\"password\":\"test123\"}}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "04 — Login with username (seeded admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('Login returns success=true', () => {",
+                  "  pm.expect(res.data.Login.success).to.eql('true');",
+                  "});",
+                  "",
+                  "pm.test('Login returns JWT token', () => {",
+                  "  pm.expect(res.data.Login.token).to.be.a('string').and.not.empty;",
+                  "  // Store token for all subsequent requests",
+                  "  pm.collectionVariables.set('token', res.data.Login.token);",
+                  "});",
+                  "",
+                  "pm.test('Login returns user with username admin', () => {",
+                  "  pm.expect(res.data.Login.user.username).to.eql('admin');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query Login($input: LoginInput!) {\n  Login(input: $input) {\n    success\n    message\n    token\n    user {\n      _id\n      username\n      email\n    }\n  }\n}",
+                "variables": "{\"input\":{\"usernameOrEmail\":\"admin\",\"password\":\"test123\"}}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "05 — Login with email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('Login by email returns success=true', () => {",
+                  "  pm.expect(res.data.Login.success).to.eql('true');",
+                  "});",
+                  "",
+                  "pm.test('Login by email returns token', () => {",
+                  "  pm.expect(res.data.Login.token).to.be.a('string').and.not.empty;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query Login($input: LoginInput!) {\n  Login(input: $input) {\n    success\n    message\n    token\n  }\n}",
+                "variables": "{\"input\":{\"usernameOrEmail\":\"admin@test.com\",\"password\":\"test123\"}}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "06 — Login invalid credentials",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('Login with wrong password returns success=false', () => {",
+                  "  pm.expect(res.data.Login.success).to.eql('false');",
+                  "});",
+                  "",
+                  "pm.test('Token is null on failed login', () => {",
+                  "  pm.expect(res.data.Login.token).to.be.null;",
+                  "});",
+                  "",
+                  "pm.test('Message says invalid credentials', () => {",
+                  "  pm.expect(res.data.Login.message.toLowerCase()).to.include('invalid');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query Login($input: LoginInput!) {\n  Login(input: $input) {\n    success\n    message\n    token\n  }\n}",
+                "variables": "{\"input\":{\"usernameOrEmail\":\"admin\",\"password\":\"wrongpassword\"}}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Employees",
+      "item": [
+        {
+          "name": "07 — Get All Employees (seeded data)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('Returns an array of employees', () => {",
+                  "  pm.expect(res.data.GetAllEmployees).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('At least 5 seeded employees exist', () => {",
+                  "  pm.expect(res.data.GetAllEmployees.length).to.be.at.least(5);",
+                  "});",
+                  "",
+                  "pm.test('Each employee has required fields', () => {",
+                  "  const emp = res.data.GetAllEmployees[0];",
+                  "  pm.expect(emp).to.have.all.keys('_id','first_name','last_name','email','gender','designation','salary','date_of_joining','department','employee_photo','created_at','updated_at');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query {\n  GetAllEmployees {\n    _id\n    first_name\n    last_name\n    email\n    gender\n    designation\n    salary\n    date_of_joining\n    department\n    employee_photo\n    created_at\n    updated_at\n  }\n}",
+                "variables": ""
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "08 — Get All Employees (no auth — should fail)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('Returns UNAUTHORIZED error without token', () => {",
+                  "  pm.expect(res.errors).to.be.an('array').with.length.greaterThan(0);",
+                  "  pm.expect(res.errors[0].message.toLowerCase()).to.include('login');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query {\n  GetAllEmployees {\n    _id\n    first_name\n  }\n}",
+                "variables": ""
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "09 — Add Employee",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('AddEmployee returns success=true', () => {",
+                  "  pm.expect(res.data.AddEmployee.success).to.eql('true');",
+                  "});",
+                  "",
+                  "pm.test('Returns employee with correct data', () => {",
+                  "  const emp = res.data.AddEmployee.employee;",
+                  "  pm.expect(emp.first_name).to.eql('Test');",
+                  "  pm.expect(emp.last_name).to.eql('Employee');",
+                  "  pm.expect(emp.email).to.eql('test.employee@company.com');",
+                  "  pm.expect(emp.gender).to.eql('Male');",
+                  "  pm.expect(emp.designation).to.eql('Consultant');",
+                  "  pm.expect(emp.salary).to.eql(75000);",
+                  "  pm.expect(emp.department).to.eql('Operations');",
+                  "});",
+                  "",
+                  "pm.test('Stores new employee ID for later tests', () => {",
+                  "  const id = res.data.AddEmployee.employee._id;",
+                  "  pm.expect(id).to.be.a('string').and.not.empty;",
+                  "  pm.collectionVariables.set('newEmployeeId', id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation AddEmployee($input: EmployeeInput!) {\n  AddEmployee(input: $input) {\n    success\n    message\n    employee {\n      _id\n      first_name\n      last_name\n      email\n      gender\n      designation\n      salary\n      date_of_joining\n      department\n      employee_photo\n    }\n  }\n}",
+                "variables": "{\"input\":{\"first_name\":\"Test\",\"last_name\":\"Employee\",\"email\":\"test.employee@company.com\",\"gender\":\"Male\",\"designation\":\"Consultant\",\"salary\":75000,\"date_of_joining\":\"2024-06-15T00:00:00.000Z\",\"department\":\"Operations\"}}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "10 — Add Employee validation (bad gender)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('Returns error for invalid gender', () => {",
+                  "  pm.expect(res.errors).to.be.an('array').with.length.greaterThan(0);",
+                  "  pm.expect(res.errors[0].message).to.include('Gender');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation AddEmployee($input: EmployeeInput!) {\n  AddEmployee(input: $input) {\n    success\n    message\n  }\n}",
+                "variables": "{\"input\":{\"first_name\":\"Bad\",\"last_name\":\"Data\",\"email\":\"bad@co.com\",\"gender\":\"Invalid\",\"designation\":\"Dev\",\"salary\":50000,\"date_of_joining\":\"2024-01-01\",\"department\":\"IT\"}}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "11 — Add Employee validation (low salary)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('Returns error for salary below minimum', () => {",
+                  "  pm.expect(res.errors).to.be.an('array').with.length.greaterThan(0);",
+                  "  pm.expect(res.errors[0].message).to.include('Salary');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation AddEmployee($input: EmployeeInput!) {\n  AddEmployee(input: $input) {\n    success\n    message\n  }\n}",
+                "variables": "{\"input\":{\"first_name\":\"Low\",\"last_name\":\"Salary\",\"email\":\"low@co.com\",\"gender\":\"Male\",\"designation\":\"Dev\",\"salary\":500,\"date_of_joining\":\"2024-01-01\",\"department\":\"IT\"}}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "12 — Search Employee by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('Returns the correct employee', () => {",
+                  "  const emp = res.data.SearchEmployeeByEid;",
+                  "  pm.expect(emp._id).to.eql(pm.collectionVariables.get('newEmployeeId'));",
+                  "  pm.expect(emp.first_name).to.eql('Test');",
+                  "  pm.expect(emp.last_name).to.eql('Employee');",
+                  "});",
+                  "",
+                  "pm.test('Has all required fields', () => {",
+                  "  const emp = res.data.SearchEmployeeByEid;",
+                  "  pm.expect(emp).to.have.all.keys('_id','first_name','last_name','email','gender','designation','salary','date_of_joining','department','employee_photo','created_at','updated_at');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query SearchEmployeeByEid($eid: ID!) {\n  SearchEmployeeByEid(eid: $eid) {\n    _id\n    first_name\n    last_name\n    email\n    gender\n    designation\n    salary\n    date_of_joining\n    department\n    employee_photo\n    created_at\n    updated_at\n  }\n}",
+                "variables": "{\"eid\":\"{{newEmployeeId}}\"}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "13 — Update Employee",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('Update returns success=true', () => {",
+                  "  pm.expect(res.data.UpdateEmployeeByEid.success).to.eql('true');",
+                  "});",
+                  "",
+                  "pm.test('Employee fields are updated', () => {",
+                  "  const emp = res.data.UpdateEmployeeByEid.employee;",
+                  "  pm.expect(emp.designation).to.eql('Senior Consultant');",
+                  "  pm.expect(emp.salary).to.eql(95000);",
+                  "  pm.expect(emp.department).to.eql('Strategy');",
+                  "});",
+                  "",
+                  "pm.test('Unchanged fields are preserved', () => {",
+                  "  const emp = res.data.UpdateEmployeeByEid.employee;",
+                  "  pm.expect(emp.first_name).to.eql('Test');",
+                  "  pm.expect(emp.last_name).to.eql('Employee');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation UpdateEmployeeByEid($eid: ID!, $input: UpdateEmployeeInput!) {\n  UpdateEmployeeByEid(eid: $eid, input: $input) {\n    success\n    message\n    employee {\n      _id\n      first_name\n      last_name\n      designation\n      salary\n      department\n    }\n  }\n}",
+                "variables": "{\"eid\":\"{{newEmployeeId}}\",\"input\":{\"designation\":\"Senior Consultant\",\"salary\":95000,\"department\":\"Strategy\"}}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "14 — Search by Department (Engineering)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('Returns an array', () => {",
+                  "  pm.expect(res.data.SearchEmployeeByDesignationOrDepartment).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('All results are from Engineering department', () => {",
+                  "  res.data.SearchEmployeeByDesignationOrDepartment.forEach(emp => {",
+                  "    pm.expect(emp.department.toLowerCase()).to.include('engineering');",
+                  "  });",
+                  "});",
+                  "",
+                  "pm.test('Returns at least 2 Engineering employees (seeded)', () => {",
+                  "  pm.expect(res.data.SearchEmployeeByDesignationOrDepartment.length).to.be.at.least(2);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query SearchEmployeeByDesignationOrDepartment($department: String) {\n  SearchEmployeeByDesignationOrDepartment(department: $department) {\n    _id\n    first_name\n    last_name\n    department\n    designation\n  }\n}",
+                "variables": "{\"department\":\"Engineering\"}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "15 — Search by Designation (Manager)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('Returns an array', () => {",
+                  "  pm.expect(res.data.SearchEmployeeByDesignationOrDepartment).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('All results have Manager designation', () => {",
+                  "  res.data.SearchEmployeeByDesignationOrDepartment.forEach(emp => {",
+                  "    pm.expect(emp.designation.toLowerCase()).to.include('manager');",
+                  "  });",
+                  "});",
+                  "",
+                  "pm.test('Returns at least 1 Manager (seeded)', () => {",
+                  "  pm.expect(res.data.SearchEmployeeByDesignationOrDepartment.length).to.be.at.least(1);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query SearchEmployeeByDesignationOrDepartment($designation: String) {\n  SearchEmployeeByDesignationOrDepartment(designation: $designation) {\n    _id\n    first_name\n    last_name\n    designation\n    department\n  }\n}",
+                "variables": "{\"designation\":\"Manager\"}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "16 — Search case-insensitive (partial match)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('Case-insensitive search returns results', () => {",
+                  "  pm.expect(res.data.SearchEmployeeByDesignationOrDepartment).to.be.an('array');",
+                  "  pm.expect(res.data.SearchEmployeeByDesignationOrDepartment.length).to.be.at.least(1);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query SearchEmployeeByDesignationOrDepartment($department: String) {\n  SearchEmployeeByDesignationOrDepartment(department: $department) {\n    _id\n    first_name\n    department\n  }\n}",
+                "variables": "{\"department\":\"engineering\"}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "17 — Search without criteria (should fail)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('Returns error when no criteria provided', () => {",
+                  "  pm.expect(res.errors).to.be.an('array').with.length.greaterThan(0);",
+                  "  pm.expect(res.errors[0].message).to.include('Provide');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query {\n  SearchEmployeeByDesignationOrDepartment {\n    _id\n  }\n}",
+                "variables": ""
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "18 — Delete Employee",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('Delete returns success=true', () => {",
+                  "  pm.expect(res.data.DeleteEmployeeByEid.success).to.eql('true');",
+                  "});",
+                  "",
+                  "pm.test('Message confirms deletion', () => {",
+                  "  pm.expect(res.data.DeleteEmployeeByEid.message.toLowerCase()).to.include('deleted');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation DeleteEmployeeByEid($eid: ID!) {\n  DeleteEmployeeByEid(eid: $eid) {\n    success\n    message\n  }\n}",
+                "variables": "{\"eid\":\"{{newEmployeeId}}\"}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "19 — Verify deleted employee is gone",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('Deleted employee returns NOT_FOUND error', () => {",
+                  "  pm.expect(res.errors).to.be.an('array').with.length.greaterThan(0);",
+                  "  pm.expect(res.errors[0].message.toLowerCase()).to.include('not found');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query SearchEmployeeByEid($eid: ID!) {\n  SearchEmployeeByEid(eid: $eid) {\n    _id\n  }\n}",
+                "variables": "{\"eid\":\"{{newEmployeeId}}\"}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Cleanup",
+      "item": [
+        {
+          "name": "20 — Delete test signup user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// No-op — this is a reminder to clean up the postman_user",
+                  "// from MongoDB if you need to re-run the full suite.",
+                  "// db.users.deleteOne({username: 'postman_user'})",
+                  "pm.test('Reminder: manually remove postman_user for re-runs', () => {",
+                  "  pm.expect(true).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "NOTE: Postman cannot delete users via GraphQL (no mutation exists). Manually remove postman_user from MongoDB if needed for re-runs."
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "newEmployeeId",
+      "value": ""
+    },
+    {
+      "key": "signupToken",
+      "value": ""
+    }
+  ]
+}
